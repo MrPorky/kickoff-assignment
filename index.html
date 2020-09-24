@@ -1,0 +1,131 @@
+<!doctype html>
+
+<html lang="en">
+    <head>
+    <meta charset="utf-8">
+
+    <title>The HTML5 Herald</title>
+    <meta name="description" content="The HTML5 Herald">
+    <meta name="author" content="SitePoint">
+
+    <link rel="stylesheet" href="style.css">
+    </head>
+
+    <body>
+        <!-- Insert these scripts at the bottom of the HTML, but before you use any Firebase services -->
+      
+        <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+        <script src="https://www.gstatic.com/firebasejs/7.21.0/firebase-app.js"></script>
+      
+        <!-- If you enabled Analytics in your project, add the Firebase SDK for Analytics -->
+        <script src="https://www.gstatic.com/firebasejs/7.21.0/firebase-analytics.js"></script>
+      
+        <!-- Add Firebase products that you want to use -->
+        <script src="https://www.gstatic.com/firebasejs/7.21.0/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.21.0/firebase-firestore.js"></script>
+        <!-- Previously loaded Firebase SDKs -->
+      
+        <script>
+            // Your web app's Firebase configuration
+            var firebaseConfig = {
+            apiKey: "AIzaSyAbaz9rrEzj9CzcU0xrat07qZqsYwuAavE",
+            authDomain: "kickoff-assignment.firebaseapp.com",
+            databaseURL: "https://kickoff-assignment.firebaseio.com",
+            projectId: "kickoff-assignment",
+            storageBucket: "kickoff-assignment.appspot.com",
+            messagingSenderId: "845451528691",
+            appId: "1:845451528691:web:bcf902e38573eb3a156a86"
+            };
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            
+            firebase.auth().signInAnonymously().catch(function(error) {
+                // Handle Errors here.
+                var errorCode = error.code;
+                var errorMessage = error.message;
+                // ...
+            });
+
+            var currentUser;
+            var data = {
+                name: '',
+                beer: 0,
+                wine: 0,
+                spirit: 0,
+            }
+            var drinks = 0;
+            var db = firebase.firestore();
+            var ref = db.collection("drinks");
+
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    currentUser = user;
+                    ref.doc(user.uid)
+                        .onSnapshot(function(snapshot) {
+                            console.log(snapshot.exists)
+                            if (!snapshot.exists) {
+                                ref.doc(user.uid).set({
+                                    name: '',
+                                    beer: 0,
+                                    wine: 0,
+                                    spirit: 0,
+                                })
+                            }
+                            var source = snapshot.metadata.hasPendingWrites ? "Local" : "Server";
+                            console.log(source, " data: ", snapshot.data());
+                            data = snapshot.data();
+                            drinks = data.beer + data.wine + data.spirit;
+
+                            var nameInput = document.getElementById('name');
+                            var drinksElement = document.getElementById('drinks');
+                            drinksElement.innerHTML = drinks;
+                            nameInput.value = data.name
+                        });
+                } else {
+                }
+            });
+        </script>
+
+        <div id="body">
+            <input id="name" type="text" placeholder="Lägg till namn" />
+            <h1 id="drinks">0</h1>
+            <h3>Lägg till enhet</h3>
+            <div class="buttons">
+                <img class="button" id="beer" src="beer.png" />
+                <img class="button" id="wine" src="wine.png" />
+                <img class="button" id="spirit" src="spirit.png" />
+            </div>
+        </div>
+
+        <script>
+            var nameInput = document.getElementById('name');
+            var beerButton = document.getElementById('beer');
+            var wineButton = document.getElementById('wine');
+            var spiritButton = document.getElementById('spirit');
+            
+            nameInput.addEventListener('blur', function(e) {
+                ref.doc(currentUser.uid).update({
+                    name: e.target.value
+                })
+            });
+
+            beerButton.addEventListener('click', function(e) {
+                ref.doc(currentUser.uid).update({
+                    beer: data.beer + 1
+                })
+            });
+            
+            wineButton.addEventListener('click', function(e) {
+                ref.doc(currentUser.uid).update({
+                    wine: data.wine + 1
+                })
+            });
+            
+            spiritButton.addEventListener('click', function(e) {
+                ref.doc(currentUser.uid).update({
+                    spirit: data.spirit + 1
+                })
+            });
+        </script>
+    </body>
+</html>
